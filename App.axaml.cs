@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 
-namespace Romanenko_FSE_lab12;
+namespace Romanenko_FSE_individual_task;
 
 public partial class App : Application
 {

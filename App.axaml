@@ -1,6 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="Romanenko_FSE_lab12.App"
+             x:Class="Romanenko_FSE_individual_task.App"
              RequestedThemeVariant="Default">
 
     <Application.Styles>

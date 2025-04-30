@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace Romanenko_FSE_lab12
+namespace Romanenko_FSE_individual_task
 {
     public class HtmlExtension : IFileHandler
     {

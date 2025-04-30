@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Romanenko_FSE_lab12
+namespace Romanenko_FSE_individual_task
 {
     internal class BinExtension : IFileHandler
     {

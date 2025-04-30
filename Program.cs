@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using System;
 
-namespace Romanenko_FSE_lab12;
+namespace Romanenko_FSE_individual_task;
 
 class Program
 {
