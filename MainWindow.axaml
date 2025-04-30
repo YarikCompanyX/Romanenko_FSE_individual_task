@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
+        x:Class="Romanenko_FSE_lab12.MainWindow"
+        Title="Avalonia File Handler"
+        Width="600" Height="450">
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open File..." Name="OpenMenuItem" Click="OpenMenuItem_Click"/>
+                <MenuItem Header="_Save As..." Name="SaveAsMenuItem" Click="SaveAsMenuItem_Click"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
+            </MenuItem>
+        </Menu>
+
+        <Grid RowDefinitions="Auto,*" Margin="10">
+            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,10" VerticalAlignment="Center">
+                <TextBlock Grid.Column="0" Text="Opened File:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                <TextBox Name="FilePathTextBox"
+                         Grid.Column="1"
+                         Text=""
+                         IsReadOnly="True"
+                         VerticalAlignment="Center"
+                         TextWrapping="NoWrap"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+            </Grid>
+
+            <TextBox Name="SourceTextBox"
+                     Grid.Row="1"
+                     Text=""
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                     Watermark="File content will appear here..."/>
+        </Grid>
+    </DockPanel>
+</Window>
+
+    
