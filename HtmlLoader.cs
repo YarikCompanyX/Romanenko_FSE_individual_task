@@ -7,7 +7,7 @@ using System.Net;
 
 namespace Romanenko_FSE_individual_task
 {
-    public class HTMLLoader : ILoader
+    public class HtmlLoader : ILoader
     {
         public async Task<string> LoadAsync(Stream stream)
         {

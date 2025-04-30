@@ -7,7 +7,7 @@ using System.Net;
 
 namespace Romanenko_FSE_individual_task
 {
-    public class HTMLSaver : ISaver
+    public class HtmlSaver : ISaver
     {
         public async Task SaveAsync(Stream stream, string content)
         {
@@ -25,7 +25,7 @@ namespace Romanenko_FSE_individual_task
             headNode.AppendChild(metaNode);
 
             HtmlNode titleNode = doc.CreateElement("title");
-            titleNode.InnerHtml = "Згенерований документ";
+            titleNode.InnerHtml = "Generated document";
             headNode.AppendChild(titleNode);
 
             HtmlNode bodyNode = doc.CreateElement("body");
