@@ -23,7 +23,10 @@ namespace Romanenko_FSE_individual_task
 
             ExtractTextNodes(bodyNode, sb);
 
-            return sb.ToString().Trim();
+            string result = sb.ToString().Trim();
+            result = System.Text.RegularExpressions.Regex.Replace(result, @"(\r?\n){2,}", "\r\n");
+
+            return result;
         }
 
         private void ExtractTextNodes(HtmlNode node, StringBuilder sb)
@@ -33,14 +36,7 @@ namespace Romanenko_FSE_individual_task
             switch (node.NodeType)
             {
                 case HtmlNodeType.Element:
-                    if (node.Name.Equals("p", StringComparison.OrdinalIgnoreCase))
-                    {
-                        EnsureParagraphBreak(sb);
-                    }
-                    else if (node.Name.Equals("br", StringComparison.OrdinalIgnoreCase))
-                    {
-                        sb.AppendLine();
-                    }
+                    string elementName = node.Name.ToLowerInvariant();
 
                     if (node.HasChildNodes)
                     {
@@ -50,22 +46,25 @@ namespace Romanenko_FSE_individual_task
                         }
                     }
 
-                    if (node.Name.Equals("p", StringComparison.OrdinalIgnoreCase))
+                    if (IsBlockLevelElement(elementName) || elementName == "br")
                     {
-                        EnsureParagraphBreak(sb);
+                        AddSingleLineBreakIfNeeded(sb);
                     }
                     break;
 
                 case HtmlNodeType.Text:
                     string decodedText = WebUtility.HtmlDecode(node.InnerText);
-                    if (!string.IsNullOrWhiteSpace(decodedText))
+                    string trimmedText = decodedText.Trim();
+
+                    if (!string.IsNullOrWhiteSpace(trimmedText))
                     {
-                        if (sb.Length > 0 && !char.IsWhiteSpace(sb[sb.Length - 1]) && !char.IsWhiteSpace(decodedText[0]))
+                        if (sb.Length > 0 && !char.IsWhiteSpace(sb[sb.Length - 1]) && !char.IsWhiteSpace(trimmedText[0]))
                         {
                             sb.Append(' ');
                         }
-                        sb.Append(decodedText.Trim());
+                        sb.Append(trimmedText);
                     }
+
                     break;
 
                 case HtmlNodeType.Comment:
@@ -96,9 +95,29 @@ namespace Romanenko_FSE_individual_task
                 }
             }
         }
+
+        private void AddSingleLineBreakIfNeeded(StringBuilder sb)
+        {
+            if (sb.Length > 0)
+            {
+                int len = sb.Length;
+                bool endsWithNewline = sb[len - 1] == '\n' || (len >= 2 && sb.ToString(len - 2, 2) == "\r\n");
+
+                if (!endsWithNewline)
+                {
+                    sb.AppendLine();
+                }
+            }
+        }
+
         private bool IsBlockLevelElement(string tagName)
         {
-            string[] blockElements = { "div", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "table", "tr", "td", "th", "blockquote", "pre" };
+            string[] blockElements = {
+                "p", "div", "h1", "h2", "h3", "h4", "h5", "h6",
+                "ul", "ol", "li", "table", "tr", "td", "th", "blockquote",
+                "pre", "hr", "form", "header", "footer", "section", "article",
+                "aside", "address", "figure", "figcaption"
+            };
             return Array.Exists(blockElements, element => element.Equals(tagName, StringComparison.OrdinalIgnoreCase));
         }
     }
