@@ -2,12 +2,13 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:c="using:Avalonia.Controls"
         mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="450"
         x:Class="Romanenko_FSE_individual_task.MainWindow"
         Title="Avalonia File Handler"
         Width="600" Height="450">
 
-    <DockPanel>
+    <DockPanel LastChildFill="True">
         <Menu DockPanel.Dock="Top">
             <MenuItem Header="_File">
                 <MenuItem Header="_Open File..." Name="OpenMenuItem" Click="OpenMenuItem_Click"/>
@@ -16,6 +17,17 @@
                 <MenuItem Header="E_xit" Click="ExitMenuItem_Click"/>
             </MenuItem>
         </Menu>
+
+        <Border DockPanel.Dock="Bottom"
+                BorderThickness="0,1,0,0"
+                BorderBrush="{DynamicResource ThemeBorderLowBrush}"
+                Background="{DynamicResource ThemeControlLowBrush}"
+                Padding="5,3"
+                MinHeight="24">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBlock Name="StatusMessageTextBlock" Text="Ready" VerticalAlignment="Center"/>
+            </StackPanel>
+        </Border>
 
         <Grid RowDefinitions="Auto,*" Margin="10">
             <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,10" VerticalAlignment="Center">
@@ -40,5 +52,3 @@
         </Grid>
     </DockPanel>
 </Window>
-
-    

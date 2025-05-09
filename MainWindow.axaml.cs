@@ -15,31 +15,47 @@ namespace Romanenko_FSE_individual_task
 {
     public partial class MainWindow : Window
     {
-        private readonly List<IAutoSave> _autoSaveObservers = new List<IAutoSave>();
+        private readonly List<ITextChanged> _textChangedObservers = new List<ITextChanged>();
+        private IStorageFile? _currentFile = null;
+        private string _previousText = "";
+        private bool _isProcessingTextChange = false;
 
-        public void AttachAutoSaveObserver(IAutoSave observer)
+        public MainWindow()
         {
-            if (!_autoSaveObservers.Contains(observer))
+            InitializeComponent();
+
+            var autoSaver = new AutoFileSaver(this);
+            AttachTextChangedObserver(autoSaver);
+
+            var nameObserver = new NamePatternObserver();
+            AttachTextChangedObserver(nameObserver);
+
+            _previousText = SourceTextBox.Text ?? "";
+
+            SourceTextBox.TextChanged += SourceTextBox_TextChanged;
+        }
+
+        public void AttachTextChangedObserver(ITextChanged observer)
+        {
+            if (!_textChangedObservers.Contains(observer))
             {
-                _autoSaveObservers.Add(observer);
+                _textChangedObservers.Add(observer);
             }
         }
 
-        public void DetachAutoSaveObserver(IAutoSave observer)
+        public void DetachTextChangedObserver(ITextChanged observer)
         {
-            _autoSaveObservers.Remove(observer);
+            _textChangedObservers.Remove(observer);
         }
 
-        private async Task NotifyAutoSaveObservers(string currentContent, IStorageFile? currentFile)
+        private async Task NotifyTextChangedObservers(string previousText, string currentText, IStorageFile? currentFile)
         {
-            if (currentFile == null) return;
-
-            var observersToNotify = _autoSaveObservers.ToList();
+            var observersToNotify = _textChangedObservers.ToList();
             foreach (var observer in observersToNotify)
             {
                 try
                 {
-                    await observer.UpdateAutoSave(currentContent, currentFile);
+                    await observer.TextChangedUpdate(previousText, currentText, currentFile, this);
                 }
                 catch (Exception ex)
                 {
@@ -48,30 +64,24 @@ namespace Romanenko_FSE_individual_task
             }
         }
 
-        private IStorageFile? _currentFile = null;
-
-        public MainWindow()
-        {
-            InitializeComponent();
-            var autoSaver = new AutoFileSaver(this);
-            AttachAutoSaveObserver(autoSaver);
-
-            SourceTextBox.TextChanged += SourceTextBox_TextChanged;
-        }
-
-        private bool _isSaving = false;
         private async void SourceTextBox_TextChanged(object? sender, TextChangedEventArgs e)
         {
-            if (_isSaving) return;
+            if (_isProcessingTextChange) return;
 
-            _isSaving = true;
+            _isProcessingTextChange = true;
             try
             {
-                await NotifyAutoSaveObservers(SourceTextBox.Text ?? "", _currentFile);
+                string currentText = SourceTextBox.Text ?? "";
+
+                // UpdateCounters(currentText);
+
+                await NotifyTextChangedObservers(_previousText, currentText, _currentFile);
+
+                _previousText = currentText;
             }
             finally
             {
-                _isSaving = false;
+                _isProcessingTextChange = false;
             }
         }
 
@@ -90,7 +100,6 @@ namespace Romanenko_FSE_individual_task
             if (files.Count >= 1)
             {
                 _currentFile = files[0];
-
                 SourceTextBox.Text = "";
                 string? filePathForDisplay = _currentFile.TryGetLocalPath() ?? _currentFile.Name;
                 FilePathTextBox.Text = filePathForDisplay;
@@ -103,7 +112,14 @@ namespace Romanenko_FSE_individual_task
 
                     await using var stream = await _currentFile.OpenReadAsync();
                     string content = await loader.LoadAsync(stream);
+
+                    SourceTextBox.TextChanged -= SourceTextBox_TextChanged;
                     SourceTextBox.Text = content;
+                    SourceTextBox.TextChanged += SourceTextBox_TextChanged;
+
+                    _previousText = content;
+                    // UpdateCounters(content);
+
                 }
                 catch (NotSupportedException nsex)
                 {
@@ -111,6 +127,8 @@ namespace Romanenko_FSE_individual_task
                     FilePathTextBox.Text = "";
                     SourceTextBox.Text = "";
                     await ShowMessageBoxAsync("Error", nsex.Message, ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Error);
+                    _previousText = "";
+                    // UpdateCounters("");
                 }
                 catch (Exception ex)
                 {
@@ -118,6 +136,8 @@ namespace Romanenko_FSE_individual_task
                     FilePathTextBox.Text = "";
                     SourceTextBox.Text = "";
                     await ShowMessageBoxAsync("Error Opening File", $"Could not read or process file: {ex.Message}", ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Error);
+                    _previousText = "";
+                    // UpdateCounters("");
                 }
             }
         }
@@ -126,7 +146,7 @@ namespace Romanenko_FSE_individual_task
         {
             if (string.IsNullOrWhiteSpace(SourceTextBox.Text))
             {
-                await ShowMessageBoxAsync("Cannot Save", "There is no text content to save.", ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Warning);
+                await ShowMessageBoxAsync("Cannot Save As", "There is no text content to save.", ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Warning);
                 return;
             }
 
@@ -135,7 +155,7 @@ namespace Romanenko_FSE_individual_task
 
             var txtType = new FilePickerFileType("Text Document (*.txt)") { Patterns = new[] { "*.txt" } };
             var binType = new FilePickerFileType("Binary Data (*.bin)") { Patterns = new[] { "*.bin" } };
-            var htmlType = new FilePickerFileType("HTML Document (*.html)") { Patterns = new[] { "*.html" } };
+            var htmlType = new FilePickerFileType("HTML Document (*.html)") { Patterns = new[] { "*.html", "*.htm" } };
 
             var file = await topLevel.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
             {
@@ -149,8 +169,8 @@ namespace Romanenko_FSE_individual_task
             if (file is not null)
             {
                 _currentFile = file;
-                string? extension = Path.GetExtension(file.Name);
-                string? filePathForDisplay = file.TryGetLocalPath() ?? file.Name;
+                string? extension = Path.GetExtension(_currentFile.Name);
+                string? filePathForDisplay = _currentFile.TryGetLocalPath() ?? _currentFile.Name;
 
                 try
                 {
@@ -161,10 +181,11 @@ namespace Romanenko_FSE_individual_task
 
                     await using var stream = await _currentFile.OpenWriteAsync();
                     if (stream.CanSeek) stream.SetLength(0);
-                    await saver.SaveAsync(stream, SourceTextBox.Text ?? "");
+                    await saver.SaveAsync(stream, contentToSave);
+
+                    _previousText = contentToSave;
 
                     FilePathTextBox.Text = filePathForDisplay;
-
                     await ShowMessageBoxAsync("Save Successful", "File saved successfully!", ButtonEnum.Ok, MsBox.Avalonia.Enums.Icon.Info);
                 }
                 catch (NotSupportedException nsex)
@@ -192,5 +213,16 @@ namespace Romanenko_FSE_individual_task
             var msgBox = MessageBoxManager.GetMessageBoxStandard(title, message, buttons, icon);
             await msgBox.ShowWindowDialogAsync(this);
         }
+
+        // private void UpdateCounters(string text)
+        // {
+        //     if (CharCountTextBlock == null || WordCountTextBlock == null) return;
+
+        //     int charCount = text.Length;
+        //     CharCountTextBlock.Text = $"Chars: {charCount}";
+        //     string[] words = text.Split(new[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        //     int wordCount = words.Length;
+        //     WordCountTextBlock.Text = $"Words: {wordCount}";
+        // }
     }
 }
